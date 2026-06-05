@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-electron/
+.venv/
+*.log
+.DS_Store
+*.mid
+*.midi
+*.wav
+!.gitkeep
