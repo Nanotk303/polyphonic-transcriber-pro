@@ -111,9 +111,13 @@ function normalizeTranscribedNotes(raw: unknown): NoteEvent[] {
 }
 
 app.whenReady().then(() => {
-  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => permission === "midi");
+  const isMidiPermission = (permission: string) =>
+    permission === "midi" || permission === "midiSysex";
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) =>
+    isMidiPermission(permission)
+  );
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-    callback(permission === "midi");
+    callback(isMidiPermission(permission));
   });
   createWindow();
 
