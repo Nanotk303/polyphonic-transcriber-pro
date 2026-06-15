@@ -8,7 +8,7 @@ The current prototype is intentionally local-first: no cloud services, no remote
 
 - Load a WAV file from the desktop interface.
 - Run Python transcription through the Electron main process.
-- Use Basic Pitch when installed, with a deterministic C-major fallback for end-to-end testing.
+- Use Basic Pitch with ONNX Runtime for local polyphonic transcription.
 - Normalize raw note events into a shared `NoteEvent` model.
 - Remove weak short ghost notes.
 - Remove duplicate same-pitch onsets.
@@ -36,12 +36,12 @@ npm install
 
 ## Python Setup
 
-The app runs `python3 python/transcribe.py input.wav output.json` from the Electron main process. Without additional packages, the script falls back to a small C-major pattern so the full app can still be tested.
+The app runs `python/transcribe.py` from the Electron main process. Create the local Python environment before transcribing audio; the app automatically uses `.venv/bin/python` when it exists.
 
 To enable Basic Pitch:
 
 ```bash
-python3 -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r python/requirements.txt
 ```

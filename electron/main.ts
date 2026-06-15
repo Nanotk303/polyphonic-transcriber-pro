@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, type OpenDialogOptions, type SaveDialogOptions } from "electron";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import type { NoteEvent } from "../src/types/NoteEvent";
 import { createMidiBytes } from "../src/lib/midi/exportMidi";
@@ -41,9 +41,23 @@ function pythonScriptPath(): string {
   return path.join(projectRoot(), "python", "transcribe.py");
 }
 
-function runPythonTranscription(filePath: string, outputPath: string): Promise<void> {
+async function resolvePythonBinary(): Promise<string> {
+  if (process.env.PYTHON_BIN) {
+    return process.env.PYTHON_BIN;
+  }
+
+  const virtualEnvPython = path.join(projectRoot(), ".venv", "bin", "python");
+  try {
+    await access(virtualEnvPython);
+    return virtualEnvPython;
+  } catch {
+    return "python3";
+  }
+}
+
+async function runPythonTranscription(filePath: string, outputPath: string): Promise<void> {
+  const python = await resolvePythonBinary();
   return new Promise((resolve, reject) => {
-    const python = process.env.PYTHON_BIN ?? "python3";
     const child = spawn(python, [pythonScriptPath(), filePath, outputPath], {
       cwd: projectRoot(),
       stdio: ["ignore", "pipe", "pipe"]

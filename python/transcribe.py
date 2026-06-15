@@ -33,26 +33,15 @@ def _note(
     }
 
 
-def fallback_transcription() -> list[dict[str, Any]]:
-    return [
-        _note(60, 0.0, 0.5, 92, 0.92, 0.86),
-        _note(64, 0.0, 0.5, 88, 0.9, 0.82),
-        _note(67, 0.0, 0.5, 86, 0.89, 0.81),
-        _note(60, 0.52, 1.0, 80, 0.74, 0.35),
-        _note(62, 1.0, 1.45, 90, 0.88, 0.84),
-        _note(65, 1.0, 1.45, 87, 0.87, 0.8),
-        _note(69, 1.0, 1.45, 86, 0.86, 0.78),
-        _note(72, 1.48, 1.52, 45, 0.28, 0.2),
-        _note(67, 1.5, 2.1, 94, 0.93, 0.9),
-        _note(71, 1.5, 2.1, 90, 0.91, 0.86),
-        _note(74, 1.5, 2.1, 89, 0.9, 0.84),
-    ]
-
-
 def transcribe_with_basic_pitch(audio_path: Path) -> list[dict[str, Any]]:
+    import basic_pitch  # type: ignore
     from basic_pitch.inference import predict  # type: ignore
 
-    _model_output, _midi_data, note_events = predict(str(audio_path))
+    onnx_model = Path(basic_pitch.__file__).parent / "saved_models" / "icassp_2022" / "nmp.onnx"
+    if not onnx_model.exists():
+        raise RuntimeError("Basic Pitch ONNX model is not installed.")
+
+    _model_output, _midi_data, note_events = predict(str(audio_path), onnx_model)
     notes: list[dict[str, Any]] = []
 
     for event in note_events:
@@ -61,6 +50,8 @@ def transcribe_with_basic_pitch(audio_path: Path) -> list[dict[str, Any]]:
             end = event.get("end_time_s", event.get("end", 0.0))
             pitch = event.get("pitch_midi", event.get("pitch", 60))
             amplitude = event.get("amplitude", event.get("velocity", 0.75))
+        elif isinstance(event, (tuple, list)) and len(event) >= 4:
+            start, end, pitch, amplitude = event[:4]
         else:
             start = getattr(event, "start_time_s", getattr(event, "start", 0.0))
             end = getattr(event, "end_time_s", getattr(event, "end", 0.0))
@@ -92,14 +83,13 @@ def main() -> int:
 
     try:
         notes = transcribe_with_basic_pitch(input_path)
-        engine = "basic_pitch"
     except Exception as exc:
-        notes = fallback_transcription()
-        engine = f"fallback ({exc.__class__.__name__})"
+        print(f"Basic Pitch transcription failed: {exc}", file=sys.stderr)
+        return 1
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(notes, indent=2), encoding="utf-8")
-    print(f"Wrote {len(notes)} notes using {engine}: {output_path}")
+    print(f"Wrote {len(notes)} notes using Basic Pitch ONNX: {output_path}")
     return 0
 
 
