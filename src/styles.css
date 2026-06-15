@@ -144,7 +144,7 @@ input[type="range"] {
 
 .editor-area {
   display: grid;
-  grid-template-rows: 58px 1fr;
+  grid-template-rows: auto 1fr;
   min-width: 0;
   min-height: 0;
 }
@@ -152,6 +152,7 @@ input[type="range"] {
 .editor-tools {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   border-bottom: 1px solid #2a313b;
   background: #101419;
@@ -171,6 +172,11 @@ input[type="range"] {
 
 .playback-controls button {
   min-width: 58px;
+}
+
+.shortcut {
+  color: #9da8b7;
+  font-size: 10px;
 }
 
 .time-readout {
@@ -193,6 +199,22 @@ input[type="range"] {
 
 .volume-control input {
   width: 60px;
+}
+
+.playback-controls .midi-output-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 210px;
+}
+
+.midi-output-control select {
+  width: 145px;
+}
+
+.playback-controls .refresh-midi {
+  min-width: auto;
+  padding: 0 8px;
 }
 
 .selection-readout {

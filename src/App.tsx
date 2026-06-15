@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExportPanel } from "./components/ExportPanel";
 import { FileLoader } from "./components/FileLoader";
 import { PianoRoll } from "./components/PianoRoll";
 import { PlaybackControls } from "./components/PlaybackControls";
 import { TransportBar } from "./components/TransportBar";
 import { useMidiPlayback } from "./hooks/useMidiPlayback";
+import { useMidiOutputs } from "./hooks/useMidiOutputs";
 import { cleanNotes } from "./lib/cleanup/cleanNotes";
 import { quantizeNotes } from "./lib/quantize/quantizeNotes";
 import type { NoteEvent, TranscriptionSettings } from "./types/NoteEvent";
@@ -31,7 +32,32 @@ function App() {
   const [log, setLog] = useState<string[]>(["Ready."]);
   const [zoomX, setZoomX] = useState(1);
   const [zoomY, setZoomY] = useState(1);
-  const playback = useMidiPlayback(notes);
+  const midi = useMidiOutputs();
+  const playback = useMidiPlayback(notes, midi.selectedOutput);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || event.repeat || busy || notes.length === 0) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName;
+      if (target?.isContentEditable || tagName === "INPUT" || tagName === "SELECT" || tagName === "TEXTAREA" || tagName === "BUTTON") {
+        return;
+      }
+
+      event.preventDefault();
+      if (playback.isPlaying) {
+        playback.pause();
+      } else {
+        playback.play();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [busy, notes.length, playback]);
 
   const selectedNote = useMemo(
     () => notes.find((note) => note.id === selectedId) ?? null,
@@ -142,11 +168,19 @@ function App() {
               isPlaying={playback.isPlaying}
               volume={playback.volume}
               disabled={busy || notes.length === 0}
+              midiOutputs={midi.outputs}
+              selectedOutputId={midi.selectedOutputId}
+              midiError={midi.error}
               onPlay={playback.play}
               onPause={playback.pause}
               onStop={playback.stop}
               onSeek={playback.seek}
               onVolumeChange={playback.setVolume}
+              onOutputChange={(id) => {
+                playback.stop();
+                midi.setSelectedOutputId(id);
+              }}
+              onRefreshOutputs={() => void midi.refresh()}
             />
             <label>
               Zoom X

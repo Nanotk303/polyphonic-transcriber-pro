@@ -17,6 +17,7 @@ The current prototype is intentionally local-first: no cloud services, no remote
 - Display notes in a canvas piano roll.
 - Play the edited MIDI arrangement with a built-in polyphonic synthesizer.
 - Pause, stop, seek, adjust volume, and follow the playhead in the piano roll.
+- Toggle playback with the Space bar and route notes to a macOS IAC MIDI port.
 - Select, delete, drag, and resize notes.
 - Export cleaned notes to MIDI with `@tonejs/midi`.
 - Keep a placeholder module for future MusicXML export.
@@ -88,7 +89,16 @@ The included tests cover the cleanup and quantization logic.
    - drag a note body to move it horizontally
    - drag the right edge to resize duration
 6. Use **Play** to audition the result; click an empty point in the piano roll to seek.
+   - Press Space to toggle play/pause when a form control is not focused.
+   - Select an IAC bus under **MIDI Out** to send notes to another macOS application.
 7. Click **Export MIDI** and choose a destination.
+
+## macOS IAC Output
+
+1. Open **Audio MIDI Setup**, then choose **Window > Show MIDI Studio**.
+2. Open **IAC Driver**, enable **Device is online**, and create or enable a bus.
+3. Restart the app, or click **Refresh** beside **MIDI Out**.
+4. Select the IAC bus. Playback sends MIDI notes on channel 1 instead of using the internal synth.
 
 ## Data Model
 

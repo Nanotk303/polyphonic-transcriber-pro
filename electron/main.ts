@@ -1,4 +1,12 @@
-import { app, BrowserWindow, dialog, ipcMain, type OpenDialogOptions, type SaveDialogOptions } from "electron";
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  session,
+  type OpenDialogOptions,
+  type SaveDialogOptions
+} from "electron";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
@@ -103,6 +111,10 @@ function normalizeTranscribedNotes(raw: unknown): NoteEvent[] {
 }
 
 app.whenReady().then(() => {
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => permission === "midi");
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    callback(permission === "midi");
+  });
   createWindow();
 
   app.on("activate", () => {

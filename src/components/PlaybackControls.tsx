@@ -1,14 +1,21 @@
+import type { SystemMidiOutput } from "../hooks/useMidiOutputs";
+
 interface PlaybackControlsProps {
   duration: number;
   currentTime: number;
   isPlaying: boolean;
   volume: number;
   disabled: boolean;
+  midiOutputs: SystemMidiOutput[];
+  selectedOutputId: string;
+  midiError: string | null;
   onPlay: () => void;
   onPause: () => void;
   onStop: () => void;
   onSeek: (time: number) => void;
   onVolumeChange: (volume: number) => void;
+  onOutputChange: (id: string) => void;
+  onRefreshOutputs: () => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -23,16 +30,21 @@ export function PlaybackControls({
   isPlaying,
   volume,
   disabled,
+  midiOutputs,
+  selectedOutputId,
+  midiError,
   onPlay,
   onPause,
   onStop,
   onSeek,
-  onVolumeChange
+  onVolumeChange,
+  onOutputChange,
+  onRefreshOutputs
 }: PlaybackControlsProps) {
   return (
     <div className="playback-controls" aria-label="MIDI playback controls">
       <button type="button" onClick={isPlaying ? onPause : onPlay} disabled={disabled}>
-        {isPlaying ? "Pause" : "Play"}
+        {isPlaying ? "Pause" : "Play"} <span className="shortcut">Space</span>
       </button>
       <button type="button" onClick={onStop} disabled={disabled || currentTime === 0}>
         Stop
@@ -62,6 +74,20 @@ export function PlaybackControls({
           onChange={(event) => onVolumeChange(Number(event.target.value))}
         />
       </label>
+      <label className="midi-output-control" title={midiError ?? undefined}>
+        MIDI Out
+        <select value={selectedOutputId} onChange={(event) => onOutputChange(event.target.value)}>
+          <option value="">Internal synth</option>
+          {midiOutputs.map((output) => (
+            <option key={output.id} value={output.id}>
+              {output.name || "Unnamed MIDI output"}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button type="button" className="refresh-midi" onClick={onRefreshOutputs} title="Refresh MIDI outputs">
+        Refresh
+      </button>
     </div>
   );
 }
