@@ -144,7 +144,7 @@ input[type="range"] {
 
 .editor-area {
   display: grid;
-  grid-template-rows: 46px 1fr;
+  grid-template-rows: 58px 1fr;
   min-width: 0;
   min-height: 0;
 }
@@ -152,14 +152,47 @@ input[type="range"] {
 .editor-tools {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   border-bottom: 1px solid #2a313b;
   background: #101419;
   padding: 8px 12px;
 }
 
 .editor-tools label {
-  width: 170px;
+  width: 100px;
+}
+
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.playback-controls button {
+  min-width: 58px;
+}
+
+.time-readout {
+  color: #d4dbe5;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.playback-controls .playback-position {
+  width: clamp(100px, 18vw, 280px);
+}
+
+.playback-controls .volume-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100px;
+}
+
+.volume-control input {
+  width: 60px;
 }
 
 .selection-readout {

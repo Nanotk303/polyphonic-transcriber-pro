@@ -15,6 +15,8 @@ The current prototype is intentionally local-first: no cloud services, no remote
 - Merge repeated same-pitch fragments while preserving strong musical reattacks.
 - Quantize note starts and durations to a tempo-based grid.
 - Display notes in a canvas piano roll.
+- Play the edited MIDI arrangement with a built-in polyphonic synthesizer.
+- Pause, stop, seek, adjust volume, and follow the playhead in the piano roll.
 - Select, delete, drag, and resize notes.
 - Export cleaned notes to MIDI with `@tonejs/midi`.
 - Keep a placeholder module for future MusicXML export.
@@ -85,7 +87,8 @@ The included tests cover the cleanup and quantization logic.
    - press Backspace to delete
    - drag a note body to move it horizontally
    - drag the right edge to resize duration
-6. Click **Export MIDI** and choose a destination.
+6. Use **Play** to audition the result; click an empty point in the piano roll to seek.
+7. Click **Export MIDI** and choose a destination.
 
 ## Data Model
 

@@ -4,10 +4,12 @@ import type { NoteEvent } from "../types/NoteEvent";
 interface PianoRollProps {
   notes: NoteEvent[];
   selectedId: string | null;
+  playheadTime: number;
   zoomX: number;
   zoomY: number;
   onChange: (notes: NoteEvent[]) => void;
   onSelect: (id: string | null) => void;
+  onSeek: (time: number) => void;
 }
 
 type DragMode = "move" | "resize" | null;
@@ -28,10 +30,12 @@ const pitchLabel = (pitch: number): string => {
 export function PianoRoll({
   notes,
   selectedId,
+  playheadTime,
   zoomX,
   zoomY,
   onChange,
-  onSelect
+  onSelect,
+  onSeek
 }: PianoRollProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -112,7 +116,16 @@ export function PianoRoll({
       context.strokeStyle = selected ? "#fff4bf" : "#0b1117";
       context.strokeRect(rect.x + 0.5, rect.y + 1.5, rect.width, rect.height);
     }
-  }, [bounds, geometry.height, geometry.width, notes, rowHeight, selectedId, pixelsPerSecond]);
+
+    const playheadX = labelWidth + playheadTime * pixelsPerSecond;
+    context.strokeStyle = "#ff6b6b";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(playheadX, 0);
+    context.lineTo(playheadX, canvas.height);
+    context.stroke();
+    context.lineWidth = 1;
+  }, [bounds, geometry.height, geometry.width, notes, playheadTime, rowHeight, selectedId, pixelsPerSecond]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -162,6 +175,9 @@ export function PianoRoll({
     const hit = findNoteAt(point.x, point.y);
     if (!hit) {
       onSelect(null);
+      if (point.x >= labelWidth) {
+        onSeek((point.x - labelWidth) / pixelsPerSecond);
+      }
       return;
     }
 

@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import { ExportPanel } from "./components/ExportPanel";
 import { FileLoader } from "./components/FileLoader";
 import { PianoRoll } from "./components/PianoRoll";
+import { PlaybackControls } from "./components/PlaybackControls";
 import { TransportBar } from "./components/TransportBar";
+import { useMidiPlayback } from "./hooks/useMidiPlayback";
 import { cleanNotes } from "./lib/cleanup/cleanNotes";
 import { quantizeNotes } from "./lib/quantize/quantizeNotes";
 import type { NoteEvent, TranscriptionSettings } from "./types/NoteEvent";
@@ -29,6 +31,7 @@ function App() {
   const [log, setLog] = useState<string[]>(["Ready."]);
   const [zoomX, setZoomX] = useState(1);
   const [zoomY, setZoomY] = useState(1);
+  const playback = useMidiPlayback(notes);
 
   const selectedNote = useMemo(
     () => notes.find((note) => note.id === selectedId) ?? null,
@@ -53,6 +56,7 @@ function App() {
     }
 
     setBusy(true);
+    playback.stop();
     try {
       addLog("Running Python transcription.");
       const transcribed = await window.electronApi.transcribeAudio(filePath);
@@ -67,6 +71,7 @@ function App() {
   };
 
   const cleanAndQuantize = () => {
+    playback.stop();
     const cleaned = cleanNotes(notes, settings);
     const quantized = quantizeNotes(cleaned, {
       tempo: settings.tempo,
@@ -77,6 +82,13 @@ function App() {
     setNotes(quantized);
     setSelectedId(null);
     addLog(`Cleaned and quantized to ${quantized.length} notes.`);
+  };
+
+  const updateNotes = (nextNotes: NoteEvent[]) => {
+    if (playback.isPlaying) {
+      playback.stop();
+    }
+    setNotes(nextNotes);
   };
 
   const exportMidi = async () => {
@@ -124,6 +136,18 @@ function App() {
         />
         <section className="editor-area">
           <div className="editor-tools">
+            <PlaybackControls
+              duration={playback.duration}
+              currentTime={playback.currentTime}
+              isPlaying={playback.isPlaying}
+              volume={playback.volume}
+              disabled={busy || notes.length === 0}
+              onPlay={playback.play}
+              onPause={playback.pause}
+              onStop={playback.stop}
+              onSeek={playback.seek}
+              onVolumeChange={playback.setVolume}
+            />
             <label>
               Zoom X
               <input
@@ -155,10 +179,12 @@ function App() {
           <PianoRoll
             notes={notes}
             selectedId={selectedId}
+            playheadTime={playback.currentTime}
             zoomX={zoomX}
             zoomY={zoomY}
-            onChange={setNotes}
+            onChange={updateNotes}
             onSelect={setSelectedId}
+            onSeek={playback.seek}
           />
         </section>
       </div>
