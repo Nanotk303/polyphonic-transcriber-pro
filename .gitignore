@@ -1,6 +1,9 @@
 node_modules/
 dist/
 dist-electron/
+python-build/
+python-dist/
+release/
 .venv/
 *.log
 .DS_Store

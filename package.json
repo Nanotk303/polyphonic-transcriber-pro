@@ -3,18 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "description": "Local Electron app for WAV to cleaned MIDI polyphonic transcription.",
-    "main": "dist-electron/electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"tsc -p tsconfig.electron.json --watch --preserveWatchOutput\" \"wait-on http://localhost:5173 dist-electron/electron/main.js && electron dist-electron/electron/main.js\"",
     "dev:electron": "tsc -p tsconfig.electron.json --watch --preserveWatchOutput",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:transcriber": "PYINSTALLER_CONFIG_DIR=python-build/config .venv/bin/pyinstaller --noconfirm --clean --distpath python-dist --workpath python-build packaging/polyphonic-transcriber.spec",
+    "dist:mac": "npm run build:transcriber && npm run build && electron-builder --mac dmg --arm64"
   },
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
     "@vitejs/plugin-react": "^5.0.0",
-    "electron": "^37.0.0",
     "vite": "^7.0.0",
     "zustand": "^5.0.5"
   },
@@ -23,10 +24,41 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "concurrently": "^9.1.2",
+    "electron": "^37.10.3",
+    "electron-builder": "^26.15.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.0",
-    "wait-on": "^8.0.3",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.nanotk.polyphonic-transcriber-pro",
+    "productName": "Polyphonic Transcriber Pro",
+    "asar": true,
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "python-dist/polyphonic-transcriber",
+        "to": "python-transcriber"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.music",
+      "target": [
+        "dmg"
+      ],
+      "identity": null
+    },
+    "dmg": {
+      "title": "Polyphonic Transcriber Pro ${version}"
+    },
+    "directories": {
+      "output": "release"
+    }
   }
 }

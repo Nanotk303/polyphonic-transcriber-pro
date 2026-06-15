@@ -69,6 +69,16 @@ npm run build
 
 The build compiles the React renderer and Electron main/preload scripts.
 
+## macOS Installer
+
+On an Apple Silicon Mac, create a standalone DMG with:
+
+```bash
+npm run dist:mac
+```
+
+The installer is written to `release/`. It includes the Basic Pitch ONNX transcriber, so the installed app does not require Node.js, Homebrew, or a separate Python environment.
+
 ## Test
 
 ```bash

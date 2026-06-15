@@ -49,6 +49,10 @@ function pythonScriptPath(): string {
   return path.join(projectRoot(), "python", "transcribe.py");
 }
 
+function packagedTranscriberPath(): string {
+  return path.join(process.resourcesPath, "python-transcriber", "polyphonic-transcriber");
+}
+
 async function resolvePythonBinary(): Promise<string> {
   if (process.env.PYTHON_BIN) {
     return process.env.PYTHON_BIN;
@@ -64,9 +68,10 @@ async function resolvePythonBinary(): Promise<string> {
 }
 
 async function runPythonTranscription(filePath: string, outputPath: string): Promise<void> {
-  const python = await resolvePythonBinary();
+  const command = app.isPackaged ? packagedTranscriberPath() : await resolvePythonBinary();
+  const args = app.isPackaged ? [filePath, outputPath] : [pythonScriptPath(), filePath, outputPath];
   return new Promise((resolve, reject) => {
-    const child = spawn(python, [pythonScriptPath(), filePath, outputPath], {
+    const child = spawn(command, args, {
       cwd: projectRoot(),
       stdio: ["ignore", "pipe", "pipe"]
     });
