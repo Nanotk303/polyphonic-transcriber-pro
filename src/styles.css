@@ -225,6 +225,13 @@ input[type="range"] {
   white-space: nowrap;
 }
 
+.beat-readout {
+  color: #c9c2ff;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .piano-roll-shell {
   min-width: 0;
   min-height: 0;

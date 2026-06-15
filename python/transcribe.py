@@ -14,6 +14,22 @@ from pathlib import Path
 from typing import Any
 
 
+def track_beats(audio_path: Path) -> dict[str, Any]:
+    import librosa  # type: ignore
+    import numpy as np  # type: ignore
+
+    audio, sample_rate = librosa.load(str(audio_path), sr=None, mono=True)
+    onset_envelope = librosa.onset.onset_strength(y=audio, sr=sample_rate)
+    tempo, beat_frames = librosa.beat.beat_track(onset_envelope=onset_envelope, sr=sample_rate)
+    tempo_values = np.asarray(tempo).reshape(-1)
+    tempo_value = float(tempo_values[0]) if tempo_values.size else 0.0
+    beat_times = librosa.frames_to_time(beat_frames, sr=sample_rate)
+    return {
+        "tempo": round(tempo_value, 3) if math.isfinite(tempo_value) and tempo_value > 0 else None,
+        "beats": [round(float(beat), 6) for beat in beat_times if math.isfinite(float(beat))],
+    }
+
+
 def _note(
     pitch: int,
     start: float,
@@ -87,9 +103,19 @@ def main() -> int:
         print(f"Basic Pitch transcription failed: {exc}", file=sys.stderr)
         return 1
 
+    try:
+        beat_tracking = track_beats(input_path)
+    except Exception as exc:
+        print(f"Beat tracking unavailable: {exc}", file=sys.stderr)
+        beat_tracking = {"tempo": None, "beats": []}
+
+    result = {"notes": notes, "beatTracking": beat_tracking}
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(notes, indent=2), encoding="utf-8")
-    print(f"Wrote {len(notes)} notes using Basic Pitch ONNX: {output_path}")
+    output_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    print(
+        f"Wrote {len(notes)} notes and {len(beat_tracking['beats'])} beats "
+        f"using Basic Pitch ONNX: {output_path}"
+    )
     return 0
 
 

@@ -9,6 +9,16 @@ export interface NoteEvent {
   source: "ai" | "edited";
 }
 
+export interface BeatTrackingData {
+  tempo: number | null;
+  beats: number[];
+}
+
+export interface TranscriptionResult {
+  notes: NoteEvent[];
+  beatTracking: BeatTrackingData;
+}
+
 export interface TranscriptionSettings {
   mergeGapSeconds: number;
   reattackThreshold: number;
@@ -24,7 +34,7 @@ export interface TranscriptionSettings {
 
 export interface ElectronApi {
   selectAudioFile: () => Promise<string | null>;
-  transcribeAudio: (filePath: string) => Promise<NoteEvent[]>;
+  transcribeAudio: (filePath: string) => Promise<TranscriptionResult>;
   exportMidi: (notes: NoteEvent[], tempo: number) => Promise<string | null>;
 }
 

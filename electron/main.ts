@@ -11,7 +11,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
-import type { NoteEvent } from "../src/types/NoteEvent";
+import type { NoteEvent, TranscriptionResult } from "../src/types/NoteEvent";
 import { createMidiBytes } from "../src/lib/midi/exportMidi";
 
 const isDev = !app.isPackaged;
@@ -115,6 +115,39 @@ function normalizeTranscribedNotes(raw: unknown): NoteEvent[] {
   });
 }
 
+function normalizeTranscription(raw: unknown): TranscriptionResult {
+  if (Array.isArray(raw)) {
+    return {
+      notes: normalizeTranscribedNotes(raw),
+      beatTracking: { tempo: null, beats: [] }
+    };
+  }
+
+  if (!raw || typeof raw !== "object") {
+    throw new Error("Transcriber output was not a transcription result.");
+  }
+
+  const value = raw as {
+    notes?: unknown;
+    beatTracking?: { tempo?: unknown; beats?: unknown };
+  };
+  const tempo = Number(value.beatTracking?.tempo);
+  const beats = Array.isArray(value.beatTracking?.beats)
+    ? value.beatTracking.beats
+        .map(Number)
+        .filter((beat) => Number.isFinite(beat) && beat >= 0)
+        .sort((a, b) => a - b)
+    : [];
+
+  return {
+    notes: normalizeTranscribedNotes(value.notes),
+    beatTracking: {
+      tempo: Number.isFinite(tempo) && tempo > 0 ? tempo : null,
+      beats
+    }
+  };
+}
+
 app.whenReady().then(() => {
   const isMidiPermission = (permission: string) =>
     permission === "midi" || permission === "midiSysex";
@@ -162,7 +195,7 @@ ipcMain.handle("audio:transcribe", async (_event, filePath: string) => {
   const outputPath = path.join(tempDir, `notes-${Date.now()}.json`);
   await runPythonTranscription(filePath, outputPath);
   const rawJson = await readFile(outputPath, "utf8");
-  return normalizeTranscribedNotes(JSON.parse(rawJson));
+  return normalizeTranscription(JSON.parse(rawJson));
 });
 
 ipcMain.handle("midi:export", async (_event, notes: NoteEvent[], tempo: number) => {

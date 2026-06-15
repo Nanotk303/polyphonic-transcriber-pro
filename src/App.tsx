@@ -8,7 +8,7 @@ import { useMidiPlayback } from "./hooks/useMidiPlayback";
 import { useMidiOutputs } from "./hooks/useMidiOutputs";
 import { cleanNotes } from "./lib/cleanup/cleanNotes";
 import { quantizeNotes } from "./lib/quantize/quantizeNotes";
-import type { NoteEvent, TranscriptionSettings } from "./types/NoteEvent";
+import type { BeatTrackingData, NoteEvent, TranscriptionSettings } from "./types/NoteEvent";
 
 const defaultSettings: TranscriptionSettings = {
   mergeGapSeconds: 0.08,
@@ -26,6 +26,7 @@ const defaultSettings: TranscriptionSettings = {
 function App() {
   const [filePath, setFilePath] = useState<string | null>(null);
   const [notes, setNotes] = useState<NoteEvent[]>([]);
+  const [beatTracking, setBeatTracking] = useState<BeatTrackingData>({ tempo: null, beats: [] });
   const [settings, setSettings] = useState<TranscriptionSettings>(defaultSettings);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -86,9 +87,19 @@ function App() {
     try {
       addLog("Running Python transcription.");
       const transcribed = await window.electronApi.transcribeAudio(filePath);
-      setNotes(transcribed);
+      setNotes(transcribed.notes);
+      setBeatTracking(transcribed.beatTracking);
+      if (transcribed.beatTracking.tempo) {
+        setSettings((current) => ({
+          ...current,
+          tempo: Number(transcribed.beatTracking.tempo?.toFixed(2))
+        }));
+      }
       setSelectedId(null);
-      addLog(`Received ${transcribed.length} raw notes.`);
+      const beatSummary = transcribed.beatTracking.tempo
+        ? ` Tempo ${transcribed.beatTracking.tempo.toFixed(1)} BPM, ${transcribed.beatTracking.beats.length} beats.`
+        : " No beat track detected.";
+      addLog(`Received ${transcribed.notes.length} raw notes.${beatSummary}`);
     } catch (error) {
       addLog(error instanceof Error ? error.message : "Transcription failed.");
     } finally {
@@ -103,7 +114,8 @@ function App() {
       tempo: settings.tempo,
       gridDivision: settings.gridDivision,
       strength: settings.quantizeStrength,
-      minDurationBeats: settings.minDurationBeats
+      minDurationBeats: settings.minDurationBeats,
+      beatTimes: beatTracking.beats
     });
     setNotes(quantized);
     setSelectedId(null);
@@ -209,9 +221,15 @@ function App() {
                 ? `${selectedNote.id} P${selectedNote.pitch} ${selectedNote.start.toFixed(2)}-${selectedNote.end.toFixed(2)}`
                 : "No note selected"}
             </div>
+            <div className="beat-readout">
+              {beatTracking.tempo
+                ? `${beatTracking.tempo.toFixed(1)} BPM · ${beatTracking.beats.length} beats`
+                : "No beat track"}
+            </div>
           </div>
           <PianoRoll
             notes={notes}
+            beats={beatTracking.beats}
             selectedId={selectedId}
             playheadTime={playback.currentTime}
             zoomX={zoomX}

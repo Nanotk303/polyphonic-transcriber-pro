@@ -6,6 +6,8 @@ basic_pitch_data = collect_data_files("basic_pitch")
 hidden_imports = [
     "basic_pitch.inference",
     "basic_pitch.note_creation",
+    "librosa.beat",
+    "librosa.onset",
     "onnxruntime",
     "resampy.filters",
 ]

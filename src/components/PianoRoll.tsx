@@ -3,6 +3,7 @@ import type { NoteEvent } from "../types/NoteEvent";
 
 interface PianoRollProps {
   notes: NoteEvent[];
+  beats: number[];
   selectedId: string | null;
   playheadTime: number;
   zoomX: number;
@@ -29,6 +30,7 @@ const pitchLabel = (pitch: number): string => {
 
 export function PianoRoll({
   notes,
+  beats,
   selectedId,
   playheadTime,
   zoomX,
@@ -108,6 +110,21 @@ export function PianoRoll({
       context.fillText(`${second}s`, x + 4, 13);
     }
 
+    for (let index = 0; index < beats.length; index += 1) {
+      const beat = beats[index];
+      if (beat > bounds.maxTime) {
+        break;
+      }
+      const x = labelWidth + beat * pixelsPerSecond;
+      context.strokeStyle = "#8b7cf6";
+      context.beginPath();
+      context.moveTo(x + 0.5, 0);
+      context.lineTo(x + 0.5, canvas.height);
+      context.stroke();
+      context.fillStyle = "#c9c2ff";
+      context.fillText(`${index + 1}`, x + 3, 27);
+    }
+
     for (const note of notes) {
       const rect = noteRect(note);
       const selected = note.id === selectedId;
@@ -125,7 +142,7 @@ export function PianoRoll({
     context.lineTo(playheadX, canvas.height);
     context.stroke();
     context.lineWidth = 1;
-  }, [bounds, geometry.height, geometry.width, notes, playheadTime, rowHeight, selectedId, pixelsPerSecond]);
+  }, [beats, bounds, geometry.height, geometry.width, notes, playheadTime, rowHeight, selectedId, pixelsPerSecond]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

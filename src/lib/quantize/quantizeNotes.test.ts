@@ -25,4 +25,17 @@ describe("quantizeNotes", () => {
     expect(result[0].start).toBe(0.125);
     expect(result[0].end).toBeGreaterThan(result[0].start);
   });
+
+  it("uses tracked beat positions when available", () => {
+    const result = quantizeNotes([note], {
+      tempo: 120,
+      gridDivision: 16,
+      strength: 1,
+      minDurationBeats: 0.25,
+      beatTimes: [0.1, 0.6, 1.1]
+    });
+
+    expect(result[0].start).toBe(0.1);
+    expect(result[0].end).toBe(0.475);
+  });
 });
